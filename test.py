@@ -10,12 +10,13 @@ IMAGE_WIDTH = 28
 IMAGE_HEIGHT = 28
 IMAGE_SIZE = IMAGE_WIDTH * IMAGE_HEIGHT
 OUTPUT_SIZE = 10
-n_hidden_1 = 300
-n_hidden_2 = 100
+n_hidden_1 = 10
+n_hidden_2 = 10
 
 # initialize a weight variable
 def createWeight(shape):
-    initial = tf.truncated_normal(shape, stddev = 0.1)
+    initial = tf.truncated_normal(shape, stddev = 1)
+    # initial = tf.random_normal(shape, stddev = 1)
     return tf.Variable(initial)
 
 # initialize a bias variable
@@ -34,8 +35,10 @@ def variable_summaries(var, name):
     tf.scalar_summary('min/' + name, tf.reduce_min(var))
     tf.histogram_summary(name, var)
 def LeNet_300_100(x):
-    n_input = IMAGE_WIDTH * IMAGE_HEIGHT
+    n_input = IMAGE_SIZE
     w_fc1 = createWeight([n_input, n_hidden_1])
+    # w_fc1 = tf.Variable(tf.random_normal([n_input, n_hidden_1],stddev = 1))
+    # w_fc1_hist = tf.histogram_summary("weights fc1", w_fc1)
     b_fc1 = createBias([n_hidden_1])
     w_fc2 = createWeight([n_hidden_1, n_hidden_2])
     b_fc2 = createBias([n_hidden_2])
@@ -44,7 +47,7 @@ def LeNet_300_100(x):
     layer_1 = tf.nn.relu(tf.add(tf.matmul(x,w_fc1), b_fc1))
     layer_2 = tf.nn.relu(tf.add(tf.matmul(layer_1,w_fc2), b_fc2))
     layer_out = tf.nn.relu(tf.add(tf.matmul(layer_2,w_out), b_out))
-    return layer_out
+    return layer_out, w_fc2
 
 def main():
     mnist = input_data.read_data_sets("MNIST.data/", one_hot = True)
@@ -53,11 +56,13 @@ def main():
     y = tf.placeholder(tf.float32, [None, OUTPUT_SIZE])
     sess = tf.InteractiveSession()
 
-    y_fc = LeNet_300_100(x)
+    y_fc, w_fc2 = LeNet_300_100(x)
 
     # train and evaluation
     with tf.name_scope('cross_entropy'):
-        cross_entropy = tf.reduce_mean(-tf.reduce_sum(y*tf.log(y_fc), reduction_indices = 1))
+    # this cap is necessary to prevent 0s
+        cross_entropy = tf.reduce_mean(-tf.reduce_sum(
+            y*tf.log(tf.clip_by_value(y_fc,1e-10,1.0)), reduction_indices = 1))
         tf.scalar_summary('cross entropy', cross_entropy)
 
     train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
@@ -76,13 +81,17 @@ def main():
         saver.restore(sess,"tmp/model.ckpt")
         print("found model, restored")
 
-    for i in range(1000):
+    for i in range(10000):
         batch = mnist.train.next_batch(50)
         if i%100== 0:
-	    train_accuracy = accuracy.eval(feed_dict={x:batch[0], y: batch[1]})
-	    train_cross_entropy = cross_entropy.eval(feed_dict={x:batch[0], y: batch[1]})
+    	    train_accuracy = accuracy.eval(feed_dict={x:batch[0], y: batch[1]})
+            train_cross_entropy = cross_entropy.eval(feed_dict={x:batch[0], y: batch[1]})
+            w_val = w_fc2.eval(sess)
+            # print np.isnan(np.min(w_val))
+            # print w_val
+            # w_val = w_fc2.eval(feed_dict={x:batch[0], y: batch[1]})
 	    with open('log/data.txt',"a") as output_file:
-		output_file.write("{},{} {}\n".format(i,train_accuracy, train_cross_entropy))
+    		output_file.write("{},{} {}\n".format(i,train_accuracy, train_cross_entropy))
         if i%10000== 0 and i != 0:
             saver.save(sess, "tmp/model.ckpt")
         print("step %d, training accuracy %g"%(i, train_accuracy))
