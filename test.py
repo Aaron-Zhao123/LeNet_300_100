@@ -10,8 +10,8 @@ IMAGE_WIDTH = 28
 IMAGE_HEIGHT = 28
 IMAGE_SIZE = IMAGE_WIDTH * IMAGE_HEIGHT
 OUTPUT_SIZE = 10
-n_hidden_1 = 30
-n_hidden_2 = 10
+n_hidden_1 = 300
+n_hidden_2 = 100
 
 # initialize a weight variable
 def createWeight(shape):
@@ -83,7 +83,7 @@ def main():
 
     w_init = w_fc2.eval(sess)
     print w_init
-    for i in range(10000):
+    for i in range(5000000):
         batch = mnist.train.next_batch(50)
         if i%100== 0:
     	    train_accuracy = accuracy.eval(feed_dict={x:batch[0], y: batch[1]})
