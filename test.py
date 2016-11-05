@@ -10,7 +10,7 @@ IMAGE_WIDTH = 28
 IMAGE_HEIGHT = 28
 IMAGE_SIZE = IMAGE_WIDTH * IMAGE_HEIGHT
 OUTPUT_SIZE = 10
-n_hidden_1 = 10
+n_hidden_1 = 30
 n_hidden_2 = 10
 
 # initialize a weight variable
@@ -61,7 +61,7 @@ def main():
     # train and evaluation
     with tf.name_scope('cross_entropy'):
     # this cap is necessary to prevent 0s
-        cross_entropy = tf.reduce_mean(-tf.reduce_sum(
+        cross_entropy = -tf.reduce_mean(-tf.reduce_sum(
             y*tf.log(tf.clip_by_value(y_fc,1e-10,1.0)), reduction_indices = 1))
         tf.scalar_summary('cross entropy', cross_entropy)
 
@@ -81,12 +81,15 @@ def main():
         saver.restore(sess,"tmp/model.ckpt")
         print("found model, restored")
 
+    w_init = w_fc2.eval(sess)
+    print w_init
     for i in range(10000):
         batch = mnist.train.next_batch(50)
         if i%100== 0:
     	    train_accuracy = accuracy.eval(feed_dict={x:batch[0], y: batch[1]})
             train_cross_entropy = cross_entropy.eval(feed_dict={x:batch[0], y: batch[1]})
             w_val = w_fc2.eval(sess)
+            print np.equal(w_init, w_val)
             # print np.isnan(np.min(w_val))
             # print w_val
             # w_val = w_fc2.eval(feed_dict={x:batch[0], y: batch[1]})
