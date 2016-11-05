@@ -62,7 +62,6 @@ def main():
     with tf.name_scope('cross_entropy'):
     # this cap is necessary to prevent 0s
         cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(y_fc, y))
-
         tf.scalar_summary('cross entropy', cross_entropy)
 
     train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
