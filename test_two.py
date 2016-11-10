@@ -15,7 +15,7 @@ import tensorflow as tf
 
 # Parameters
 learning_rate = 0.001
-training_epochs = 15
+training_epochs = 10000
 batch_size = 100
 display_step = 1
 
@@ -106,6 +106,7 @@ def main():
                 avg_cost += c / total_batch
             # Display logs per epoch step
             if epoch % display_step == 0:
+		saver.save(sess, "tmp/model.ckpt")
                 print("Epoch:", '%04d' % (epoch+1), "cost=", \
                     "{:.9f}".format(avg_cost))
         print("Optimization Finished!")
